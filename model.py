@@ -30,10 +30,11 @@ class Model(object):
 		images = tf.placeholder(tf.float32,[self.batch_size]+image_shape);
 		vectors = tf.placeholder(tf.float32,[self.batch_size,self.vector_size]);
 		train = tf.placeholder(tf.bool);
+		reuse = False if self.phase =='train' else True;
 		discriminator = Discriminator(self.params,self.phase);
 		generator = Generator(self.params,self.phase);
-		output = generator.run(vectors,train,reuse=False);
-		real = discriminator.run(images,train,reuse=False);
+		output = generator.run(vectors,train,reuse);
+		real = discriminator.run(images,train,reuse);
 		fake = discriminator.run(output,train,reuse=True);
 		real_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=real,labels=tf.ones_like(real)));
 		fake_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=fake,labels=tf.zeros_like(fake)));
@@ -122,13 +123,13 @@ class Model(object):
 		for image_file in files:
 			image = imread(image_file);
 			image = resize(image,(image_shape[0],image_shape[1]));
-			image = image/127.5-1;
+			image = (image-127.5)/127.5;
 			images.append(image);
 		images = np.array(images,np.float32);
 		return images;
 
 	def save_image(self,output,name):
-		output = (output+1)*127.5;
+		output = (output*127.5)+127.5;
 		if(self.phase=='train'):
 			file_name = self.params.train_dir+name+'.png';
 		else:
